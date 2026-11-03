@@ -14,49 +14,40 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Mengambil source code repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Menyiapkan Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 26
           cache: npm
 
-      # 3. Install dependencies
       - name: Install dependencies
         run: npm ci
 
-      # 4. Menjalankan ESLint
       - name: Run ESLint
         run: npm run lint
 
-      # 5. Menjalankan unit tests
       - name: Run unit tests
         run: npm test -- --run
 
-      # 6. Build frontend
       - name: Build frontend
         run: npm run build -w frontend
 
-      # 7. Setup Docker Buildx
       - name: Set up Docker Buildx
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/devops/docker-ci-cd' || github.ref == 'refs/heads/main')
+        if: github.event_name == 'push'
         uses: docker/setup-buildx-action@v3
 
-      # 8. Login ke Docker Hub
       - name: Login to Docker Hub
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/devops/docker-ci-cd' || github.ref == 'refs/heads/main')
+        if: github.event_name == 'push'
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 9. Build dan push frontend image
       - name: Build and push frontend image
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/devops/docker-ci-cd' || github.ref == 'refs/heads/main')
+        if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -66,9 +57,8 @@ jobs:
             febrisujaya/conduit-frontend:latest
             febrisujaya/conduit-frontend:${{ github.sha }}
 
-      # 10. Build dan push backend image
       - name: Build and push backend image
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/devops/docker-ci-cd' || github.ref == 'refs/heads/main')
+        if: github.event_name == 'push'
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -77,3 +67,14 @@ jobs:
           tags: |
             febrisujaya/conduit-backend:latest
             febrisujaya/conduit-backend:${{ github.sha }}
+
+  deploy:
+    needs: test-and-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Windows, X64]
+
+    steps:
+      - name: Deploy application
+        shell: powershell
+        run: |
+          & "D:\kuliah\projek_kuliah\projek_devops\conduit-realworld-example-app\deploy.ps1"
