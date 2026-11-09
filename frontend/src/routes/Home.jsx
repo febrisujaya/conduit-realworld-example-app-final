@@ -14,7 +14,7 @@ function Home() {
       {!isAuth && (
         <BannerContainer>
           <h1 className="logo-font">Conduit - DevOps</h1>
-          <p>A place to share your knowledge.</p>
+          <p>Selamat datang di Kelompok Capcay.</p>
         </BannerContainer>
       )}
       <ContainerRow type="page">
